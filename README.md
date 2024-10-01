@@ -2,7 +2,7 @@
 
 ## План-проект тестирования клиентского приложения и облачного сервиса управления устройствами умного дома
 
-См. [План-проект тестирования облачного приложения.pdf](План-проект тестирования облачного приложения.pdf)
+См. [План-проект тестирования облачного приложения.pdf](План-проект%20тестирования%20облачного%20приложения.pdf)
 
 ## Проект спецификации OpenAPI к API Gateway &mdash; API-шлюзу между клиентским приложением и облачному сервису управления домашними устройствами
 
@@ -27,11 +27,11 @@ UUID, присваиваемый в момент создания (добавл�
 
 *Интерактивный просмотр на Swagger.io:*
 
-[https://petstore.swagger.io/?url=https://raw.githubusercontent.com/alexeycoder/gb_arch_hw12_vacuumcleaner_prj/refs/heads/main/openapi.yaml](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/alexeycoder/gb_arch_hw12_vacuumcleaner_prj/refs/heads/main/openapi.yaml)
+[https://petstore.swagger.io/?url=https://raw.githubusercontent.com/alexeycoder/gb_arch_hw12_vacuumcleaner_prj/refs/heads/main/openapi3_1__api_gateway.yaml](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/alexeycoder/gb_arch_hw12_vacuumcleaner_prj/refs/heads/main/openapi3_1__api_gateway.yaml)
 
 *Краткое превью*
 
-
+![openapi3_1__api_gateway_preview](https://github.com/user-attachments/assets/6dc40a35-8632-4943-9e9a-617f45452000)
 
 *Примечания к компонентам OpenAPI:*
 
