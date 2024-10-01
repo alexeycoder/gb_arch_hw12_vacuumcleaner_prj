@@ -1,0 +1,1 @@
+# gb_arch_hw12_vacuumcleaner_prj
