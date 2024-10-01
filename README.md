@@ -59,4 +59,11 @@ API сервиса позволяет получить состояние уст
 
 См. [api-gateway-spring-server/](api-gateway-spring-server)
 
+### Верхнеуровневая схема облачного микросервисного программного продукта
+
+![top-level-cloud-app-arch](https://github.com/user-attachments/assets/dfb4fae4-1aec-4e54-ada0-3421bd1e0e9d)
+
+### Пример проекта вертикального среза приложения &mdash; микро-сервиса аутентификации на базе токенов безопасности (UML диаграмма)
+
+![uml_micro_authentication_service](https://github.com/user-attachments/assets/dd504932-cfd9-4fef-8e8a-25920dc65eb8)
 
