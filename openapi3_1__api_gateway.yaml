@@ -1,0 +1,903 @@
+openapi: 3.1.0
+info:
+  title: Symcon smart-home — API Gateway
+  description: >-
+    API шлюза сервиса управления устройствами умного дома
+    для взаимодействия с клиентскими приложениями.
+  contact:
+    name: Alexey Kuznetsov
+    url: https://github.com/alexeycoder
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 2.0.0
+
+servers:
+  - url: https://localhost:8080/v2
+    description: Test server
+  - url: https://symcon.ru/v2
+    description: Production server
+
+tags:
+  - name: user
+    description: Операции с профилем пользователя
+  - name: groups
+    description: Операции над группами совместного пользования устройствами.
+  - name: devices
+    description: Операции над устройствами.
+  - name: schedules
+    description: Операции над расписаниями работ для устройств.
+
+paths:
+
+  /users:
+
+    post:
+      tags:
+        - user
+      summary: Регистрирует нового пользователя
+      description: >-
+        Регистрирует нового пользователя в сервисе
+        и возвращает токен авторизации
+      operationId: createUser
+      requestBody:
+        description: Данные нового пользователя
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        '201':
+          description: Пользователь успешно создан и зарегистрирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    format: byte
+                    description: Токен авторизации созданного пользователя
+          links:
+            GetAuthorizedUser: # <---- наименование для ссылки
+              operationId: getUser
+              # or
+              # operationRef: '#/paths/~1user~1/get'
+              parameters:
+                Api-Token: "$response.body#/token"
+                in: header
+              description: >-
+                Для справки:
+                Значение `token` в теле ответа используется в параметрe
+                `Api-Token` заголовка в методах, требующих аутентификации
+                и авторизации пользователя, например в `GET /user`.
+        '400':
+          description: Некорректные данные в запросе
+        '409':
+          description: Пользователь с таким username уже существует
+        default:
+          description: Ошибка сервера
+
+  /user:
+
+    get:
+      tags:
+        - user
+      summary: Получает данные профиля авторизованного пользователя
+      description: Получает данные профиля авторизованного пользователя
+      operationId: getUser
+      security:
+        - ApiTokenAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Несанкционированный доступ
+        '404':
+          description: Пользователь не найден
+        default:
+          description: Ошибка сервера
+
+    put:
+      tags:
+        - user
+      summary: Обновляет данные авторизованного пользователя
+      description: Обновляет данные авторизованного пользователя
+      operationId: updateUser
+      security:
+        - ApiTokenAuth: []
+      requestBody:
+        description: Данные пользователя
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        '200':
+          description: Данные пользователя успешно обновлены
+        '400':
+          description: Некорректные данные в запросе
+        '401':
+          description: Несанкционированный доступ
+        '404':
+          description: Пользователь не найден
+        default:
+          description: Ошибка сервера
+
+    delete:
+      tags:
+        - user
+      summary: Удаляет профиль авторизованного пользователя
+      description: Удаляет профиль авторизованного пользователя
+      operationId: deleteUser
+      security:
+        - ApiTokenAuth: []
+      responses:
+        '204':
+          description: Профиль пользователя успешно удалён
+        '401':
+          description: Несанкционированный доступ
+        '404':
+          description: Пользователь не найден
+        default:
+          description: Ошибка сервера
+
+  /groups:
+
+    post:
+      tags:
+        - groups
+      summary: Добавляет группу совместного пользования устройствами
+      description: Добавляет группу совместного пользования устройствами
+      operationId: addGroup
+      security:
+        - ApiTokenAuth: []
+      requestBody:
+        description: Данные новой группы
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Group'
+        required: true
+      responses:
+        '201':
+          description: Группа успешно добавлена
+        '400':
+          description: Некорректные данные в запросе
+        '401':
+          description: Несанкционированный доступ
+        '404':
+          description: Пользователь не найден
+        default:
+          description: Ошибка сервера
+
+  /groups/{groupNum}:
+
+    get:
+      tags:
+        - groups
+      summary: Ищет группу по номеру и возвращает её данные
+      description: Ищет группу по номеру и возвращает её данные
+      operationId: findGroupByNum
+      security:
+        - ApiTokenAuth: []
+      parameters:
+        - name: groupNum
+          in: path
+          description: Номер группы
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '400':
+          description: Некорректный номер группы в запросе
+        '401':
+          description: Несанкционированный доступ
+        '404':
+          description: Группа не найдена
+        default:
+          description: Ошибка сервера
+
+    put:
+      tags:
+        - groups
+      summary: Обновляет данные группы совместного пользования устройствами
+      description: Обновляет данные группы совместного пользования устройствами
+      operationId: updateGroup
+      security:
+        - ApiTokenAuth: []
+      parameters:
+        - name: groupNum
+          in: path
+          description: Номер группы
+          required: true
+          schema:
+            type: integer
+            format: int32
+      requestBody:
+        description: Данные группы
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Group'
+        required: true
+      responses:
+        '200':
+          description: Группа успешно обновлена
+        '400':
+          description: Некорректный номер группы в запросе
+        '401':
+          description: Несанкционированный доступ
+        '404':
+          description: Группа не найдена
+        default:
+          description: Ошибка сервера
+
+    delete:
+      tags:
+        - groups
+      summary: Удаляет группу совместного пользования устройствами
+      description: Удаляет группу совместного пользования устройствами
+      operationId: deleteGroup
+      security:
+        - ApiTokenAuth: []
+      parameters:
+        - name: groupNum
+          in: path
+          description: Номер группы
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '204':
+          description: Группа успешно удалена
+        '400':
+          description: Некорректный номер группы в запросе
+        '401':
+          description: Несанкционированный доступ
+        '404':
+          description: Группа не найдена
+        default:
+          description: Ошибка сервера
+
+  /groups/{groupNum}/devices:
+
+    post:
+      tags:
+        - devices
+      summary: Добавляет устройство
+      description: Добавляет устройство
+      operationId: addDevice
+      security:
+        - ApiTokenAuth: []
+      parameters:
+        - name: groupNum
+          in: path
+          description: Номер группы
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: Данные устройства
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+        required: true
+      responses:
+        '201':
+          description: Устройство успешно добавлено
+          headers:
+            Location:
+              description: URL добавленного нового устройства
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deviceUuid:
+                    type: string
+                    format: uuid
+                    description: Уникальный идентификатор добавленного устройства
+          links:
+            GetDeviceByUuid:
+              operationId: getDevice
+              parameters:
+                deviceUuid: "$response.body#/deviceUuid"
+              description: >-
+                Значение `deviceUuid`, полученное в ответе, может использоваться
+                в качестве одноимённого параметра в `GET /devices/{deviceUuid}`.
+            UpdateDeviceByUuid:
+              operationId: updateDevice
+              parameters:
+                deviceUuid: "$response.body#/deviceUuid"
+              description: >-
+                Значение `deviceUuid`, полученное в ответе, может использоваться
+                в качестве одноимённого параметра в `PUT /devices/{deviceUuid}`.
+        '400':
+          description: Некорректные данные устройства в запросе или номер группы
+        '401':
+          description: Несанкционированный доступ
+        '404':
+          description: Группа не найдена
+        default:
+          description: Ошибка сервера
+
+    get:
+      tags:
+        - devices
+      summary: Получает устройства группы
+      description: Получает устройства группы
+      operationId: findAllDevicesByGroup
+      security:
+        - ApiTokenAuth: []
+      parameters:
+        - name: groupNum
+          in: path
+          description: Номер группы
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Данные всех устройств группы
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Device'
+        '400':
+          description: Некорректный номер группы
+        '401':
+          description: Несанкционированный доступ
+        '404':
+          description: Группа не найдена
+        default:
+          description: Ошибка сервера
+
+  /devices/{deviceUuid}:
+
+    get:
+      tags:
+        - devices
+      summary: Получает данные устройства
+      description: Получает данные устройства
+      operationId: getDevice
+      security:
+        - ApiTokenAuth: []
+      parameters:
+        - name: deviceUuid
+          in: path
+          description: Уникальный идентификатор устройства
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+        '400':
+          description: Некорректный идентификатор устройства
+        '401':
+          description: Несанкционированный доступ
+        '404':
+          description: Устройство не найдено
+        default:
+          description: Ошибка сервера
+
+    put:
+      tags:
+        - devices
+      summary: Обновляет данные устройства
+      description: Обновляет данные устройства
+      operationId: updateDevice
+      security:
+        - ApiTokenAuth: []
+      parameters:
+        - name: deviceUuid
+          in: path
+          description: Уникальный идентификатор устройства
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: Данные устройства для обновления
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+        required: true
+      responses:
+        '200':
+          description: Данные устройства успешно обновлены
+        '400':
+          description: Некорректный идентификатор устройства
+        '401':
+          description: Несанкционированный доступ
+        '404':
+          description: Устройство не найдено
+        default:
+          description: Ошибка сервера
+
+    delete:
+      tags:
+        - devices
+      summary: Удаляет устройство
+      description: Удаляет устройство
+      operationId: deleteDevice
+      security:
+        - ApiTokenAuth: []
+      parameters:
+        - name: deviceUuid
+          in: path
+          description: Уникальный идентификатор устройства
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Устройство успешно удалено
+        '400':
+          description: Некорректный идентификатор устройства
+        '401':
+          description: Несанкционированный доступ
+        '404':
+          description: Устройство не найдено
+        default:
+          description: Ошибка сервера
+
+  /devices/{deviceUuid}/state:
+
+    get:
+      tags:
+        - devices
+      summary: Получает основные показатели состояния устройства
+      description: |
+        Получает основные показатели состояния устройства.
+
+        При нахождении устройства и клиентского приложения в одном сегменте сети,
+        приложению следует опрашивать устройство напрямую минуя API сервиса.
+        
+      operationId: getDeviceState
+      security:
+        - ApiTokenAuth: []
+      parameters:
+        - name: deviceUuid
+          in: path
+          description: Уникальный идентификатор устройства
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceState'
+        '400':
+          description: Некорректные идентификатор устройства
+        '401':
+          description: Несанкционированный доступ
+        '404':
+          description: Устройство не найдено
+        default:
+          description: Ошибка сервера
+
+  /devices/{deviceUuid}/schedules:
+
+    get:
+      tags:
+        - schedules
+      summary: Получает все графики работ устройства
+      description: Получает все графики работ устройства
+      operationId: findSchedules
+      security:
+        - ApiTokenAuth: []
+      parameters:
+        - name: deviceUuid
+          in: path
+          description: Уникальный идентификатор устройства
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: 
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Некорректный идентификатор устройства
+        '401':
+          description: Несанкционированный доступ
+        '404':
+          description: Устройство не найдено
+        default:
+          description: Ошибка сервера
+
+    post:
+      tags:
+        - schedules
+      summary: Добавляет график работ для устройства
+      description: Добавляет график работ для устройства
+      operationId: addSchedule
+      security:
+        - ApiTokenAuth: []
+      parameters:
+        - name: deviceUuid
+          in: path
+          description: Уникальный идентификатор устройства
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: Данные графика работ
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Schedule'
+        required: true
+      responses:
+        '201':
+          description: График работ успешно добавлен
+          headers:
+            Location:
+              description: URL добавленного нового графика работ
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scheduleNum:
+                    type: integer
+                    format: int32
+                    description: Номер графика в разрезе устройства
+          links:
+            GetDeviceScheduleByNum:
+              operationId: getSchedule
+              parameters:
+                scheduleNum: "$response.body#/scheduleNum"
+              description: >-
+                Значение `scheduleNum`, полученное в ответе, может использоваться
+                в качестве одноимённого параметра в
+                `GET /devices/{deviceUuid}/schedules/{scheduleNum}`.
+            UpdateDeviceScheduleByNum:
+              operationId: updateSchedule
+              parameters:
+                scheduleNum: "$response.body#/scheduleNum"
+              description: >-
+                Значение `scheduleNum`, полученное в ответе, может использоваться
+                в качестве одноимённого параметра в
+                `PUT /devices/{deviceUuid}/schedules/{scheduleNum}`.
+        '400':
+          description: >
+            Некорректные данные графика работ или
+            некорректный идентификатор устройства в запросе
+        '401':
+          description: Несанкционированный доступ
+        '404':
+          description: Устройство не найдено
+        default:
+          description: Ошибка сервера
+
+  /devices/{deviceUuid}/schedules/{scheduleNum}:
+
+    get:
+      tags:
+        - schedules
+      summary: Получает график работ устройства по номеру
+      description: Получает график работ устройства по номеру
+      operationId: getSchedule
+      security:
+        - ApiTokenAuth: []
+      parameters:
+        - name: deviceUuid
+          in: path
+          description: Уникальный идентификатор устройства
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: scheduleNum
+          in: path
+          description: Номер графика работ
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Некорректные идентификатор устройства или номер графика
+        '401':
+          description: Несанкционированный доступ
+        '404':
+          description: График не найден
+        default:
+          description: Ошибка сервера
+
+    put:
+      tags:
+        - schedules
+      summary: Обновить график работ
+      description: Обновить график работ
+      operationId: updateSchedule
+      security:
+        - ApiTokenAuth: []
+      parameters:
+        - name: deviceUuid
+          in: path
+          description: Уникальный идентификатор устройства
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: scheduleNum
+          in: path
+          description: Номер графика работ
+          required: true
+          schema:
+            type: integer
+            format: int32
+      requestBody:
+        description: Данные графика работ для обновления
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Schedule'
+        required: true
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Некорректные идентификатор устройства или номер графика
+        '401':
+          description: Несанкционированный доступ
+        '404':
+          description: График не найден
+        default:
+          description: Ошибка сервера
+
+
+components:
+
+  securitySchemes:
+    ApiTokenAuth:
+      type: apiKey
+      in: header
+      name: Api-Token
+
+  schemas:
+  
+    User:
+      required:
+        - username
+        - password
+        - name
+      type: object
+      properties:
+        username:
+          type: string
+          format: email
+          examples:
+            - johnsmith@yandex.ru
+          description: Адрес эл. почты пользователя в качестве имени для входа
+        password:
+          type: string
+          format: binary
+          description: Хеш пароля
+        name:
+          type: string
+          examples:
+            - John Smith
+          description: Отображаемое имя пользователя
+
+    Group:
+      required:
+        - name
+        - members
+      type: object
+      properties:
+        name:
+          type: string
+          examples:
+            - "Семья"
+        members:
+          type: array
+          items:
+            type: object
+            properties:
+              username:
+                type: string
+                format: email
+          examples:
+            - "- username: gertrude@mail.ru
+               - username: vasya@inbox.ru
+               "
+
+    Connection:
+      description: |
+        Данные для подключения устройства к беспроводной сети пользователя.
+        Не хранятся в базе сервиса, а только локально на устройстве и в приложении
+        пользователя. В базе сервиса хранится только идентификатор подключения
+        в локальном хранилище.
+
+        По сути не является компонентом API шлюза, описание добавлено для справки.
+
+      required:
+        - ssid
+        - passphrase
+      type: object
+      properties:
+        connectionId:
+          type: integer
+          format: int32
+          examples:
+            - 12
+        ssid:
+          type: string
+        passphrase:
+          type: string
+          format: password
+
+    Device:
+      required:
+        - typeId
+        - name
+        - modelId
+        - serialNum
+        - firmwareVersion
+        - connectionId
+      type: object
+      properties:
+        deviceUuid:
+          type: string
+          format: uuid
+          examples:
+            - 'a83dcf43-dd10-4597-9a9c-6ba1ac50bd0c'
+        typeId:
+          type: integer
+          format: int32
+          examples:
+            - 1
+            - 2
+          description: Код производителя типа устройства, например, 1 - робот-пылесос
+        name:
+          type: string
+          examples:
+            - Робот Кузя
+        modelId:
+          type: integer
+          format: int32
+        serialNum:
+          type: string
+          examples:
+            - "6a0fa287-6969-4839"
+        firmwareVersion:
+          type: integer
+          format: int32
+          examples:
+            - 2
+        connectionId:
+          type: integer
+          format: int64
+          examples:
+            - 12
+
+    DeviceState:
+      description: |
+        Основные показатели состояния устройства.
+        API сервиса позволяет получить состояние устройства удалённо,
+        когда устройство и клиентское приложение находятся в разных сегментах
+        (разных сетях).
+        В обычном случае, когда устройство и клиентское приложение находяся
+        в одной локальной сети, получение данных о состоянии устройства должно
+        осуществляться приложением напрямую в обход API сервиса.
+
+      required:
+        - deviceUuid
+        - chargeLevel
+        - isCharging
+        - batteryHealth
+        - currentService
+        - connectionUrl
+      type: object
+      properties:
+        deviceUuid:
+          type: string
+          format: uuid
+          examples:
+            - 'a83dcf43-dd10-4597-9a9c-6ba1ac50bd0c'
+        chargeLevel:
+          type: integer
+          format: int32
+          examples:
+            - 0
+            - 100
+        isCharging:
+          type: boolean
+        batteryHealth:
+          type: integer
+          format: int32
+          examples:
+            - 80
+        currentService:
+          type: string
+          format: enum
+        connectionUrl:
+          type: string
+          format: uri
+          examples:
+            - "192.168.1.123:45678"
+
+    Schedule:
+      required:
+        - deviceUuid
+        - dayOfWeek
+        - timeOfDay
+        - serviceTypeId
+        - servicePropertiesCode
+      type: object
+      properties:
+        deviceUuid:
+          type: string
+          format: uuid
+          examples:
+            - 'a83dcf43-dd10-4597-9a9c-6ba1ac50bd0c'
+        dayOfWeek:
+          type: integer
+          format: int32
+        timeOfDay:
+          type: string
+          format: time
+          examples:
+            - "10:35"
+        service:
+          type: string
+          enum:
+            - RoboVac_Vacuum_Dry
+            - RoboVac_Vacuum_Wet
+            - RoboVac_EmptyDuster
+            - RoboVac_CancelAndBack
+            - RoboVac_BuildMap
